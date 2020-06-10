@@ -224,6 +224,8 @@
                   (-> (dissoc request :body :ctrl :in :out :request-time :server-name :server-port :servlet-request
                               :ssl-client-cert :support-info :trailers-fn)
                     (update :headers headers/truncate-header-values)))
+        (let [{:keys [servlet-request]} request]
+          (log/info "request cookie:" (some-> servlet-request (.getHeaders "cookie") enumeration-seq)))
         (let [response (handler request)
               get-request-cid (fn get-request-cid [] request-cid)]
           (if (map? response)

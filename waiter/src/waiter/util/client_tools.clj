@@ -370,32 +370,34 @@
                        path)
          request-headers (walk/stringify-keys (ensure-cid-in-headers headers))]
      (try
-       (when verbose
-         (log/info "request url:" request-url)
-         (log/info "request headers:" (into (sorted-map) request-headers)))
+       (log/info "request url:" request-url)
+       (log/info "request headers:" (into (sorted-map) request-headers))
+       (log/info "request cookies:" cookies)
        (let [waiter-auth-cookie (some #(= authentication/AUTH-COOKIE-NAME (:name %)) cookies)
              add-spnego-auth (and (not disable-auth) use-spnego (not waiter-auth-cookie))
+             request-options (cond-> {:body body
+                                      :follow-redirects? false
+                                      :headers request-headers
+                                      :method method
+                                      :query-string query-params
+                                      :url request-url}
+                               multipart (assoc :multipart multipart)
+                               add-spnego-auth (assoc :auth (hu/spnego-authentication (URI. request-url)))
+                               form-params (assoc :form-params form-params)
+                               idle-timeout (assoc :idle-timeout idle-timeout)
+                               (not (str/blank? content-type)) (assoc :content-type content-type)
+                               (seq cookies) (assoc :cookies (map (fn [c] [(:name c) (:value c)]) cookies))
+                               trailers-fn (assoc :trailers-fn trailers-fn))
+             _ (log/info "request options:" (into (sorted-map) request-options))
              {:keys [body error error-chan headers status trailers]}
-             (async/<!! (http/request
-                          client
-                          (cond-> {:body body
-                                   :follow-redirects? false
-                                   :headers request-headers
-                                   :method method
-                                   :query-string query-params
-                                   :url request-url}
-                            multipart (assoc :multipart multipart)
-                            add-spnego-auth (assoc :auth (hu/spnego-authentication (URI. request-url)))
-                            form-params (assoc :form-params form-params)
-                            idle-timeout (assoc :idle-timeout idle-timeout)
-                            (not (str/blank? content-type)) (assoc :content-type content-type)
-                            cookies (assoc :cookies (map (fn [c] [(:name c) (:value c)]) cookies))
-                            trailers-fn (assoc :trailers-fn trailers-fn))))
+             (async/<!! (http/request client request-options))
              response-body (when body (async/<!! body))
              error (or error
                        (when error-chan (async/<!! error-chan)))]
          (when verbose
            (log/info (get request-headers "x-cid") "response size:" (count (str response-body))))
+         (log/info "response status:" status)
+         (log/info "response headers:" headers)
          {:body response-body
           :cookies (parse-cookies (get headers "set-cookie"))
           :error error

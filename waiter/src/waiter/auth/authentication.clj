@@ -97,7 +97,7 @@
    Returns a sequence containing [auth-principal auth-time]."
   [waiter-cookie password]
   (try
-    (log/debug "decoding cookie:" waiter-cookie)
+    (log/info "decoding cookie:" waiter-cookie)
     (when waiter-cookie
       (let [decoded-cookie (cookie-support/decode-cookie-cached waiter-cookie password)]
         (if (seq decoded-cookie)

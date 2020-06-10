@@ -46,10 +46,14 @@
 (defn cookie-value
   "Retrieves the value corresponding to the cookie name."
   [cookie-string cookie-name]
+  (log/info "raw cookie string:" cookie-string)
   (when cookie-string
     (let [name-regex (re-pattern (str "(?i)" cookie-name "=([^;]+)"))]
       (when-let [^String value (second (re-find name-regex cookie-string))]
-        (-> value url-decode strip-double-quotes)))))
+        (log/info cookie-name "has raw value" value) ;; TODO shams remove
+        (let [result-value (-> value url-decode strip-double-quotes)]
+          (log/info cookie-name "has value" result-value) ;; TODO shams remove
+          result-value)))))
 
 (defn remove-cookie
   "Removes the specified cookie"
@@ -82,6 +86,8 @@
   "Decode Waiter encoded cookie."
   [^String waiter-cookie password]
   (try
+    ;; TODO shams remove
+    (log/info "decoding cookie:" waiter-cookie)
     (-> waiter-cookie
         (.getBytes)
         (b64/decode)
