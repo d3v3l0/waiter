@@ -45,7 +45,7 @@
                  [io.grpc/grpc-core "1.20.0"
                   :exclusions [com.google.guava/guava]
                   :scope "test"]
-                 [twosigma/jet "0.7.10-20200616_174826-gc1f5694"
+                 [twosigma/jet "0.7.10-20200703_093524-g5fb9b0c"
                   :exclusions [org.mortbay.jetty.alpn/alpn-boot]]
                  [twosigma/clj-http "1.0.2-20180124_201819-gcdf23e5"
                   :exclusions [commons-codec commons-io org.clojure/tools.reader potemkin slingshot]]
@@ -171,4 +171,10 @@
                           "-Xloggc:log/gc.log"]}
              :override-maven {:local-repo ~(System/getenv "WAITER_MAVEN_LOCAL_REPO")}
              :uberjar {:aot :all}}
+  :repositories {"sonatype" {:url "http://oss.sonatype.org/content/repositories/releases"
+                             :snapshots false
+                             :releases {:checksum :fail :update :always}}
+                 "sonatype-snapshots" {:url "https://oss.sonatype.org/content/repositories/jetty-snapshots"
+                                       :snapshots true
+                                       :releases {:checksum :fail :update :always}}}
   :uberjar-name ~(System/getenv "UBERJAR_NAME"))
